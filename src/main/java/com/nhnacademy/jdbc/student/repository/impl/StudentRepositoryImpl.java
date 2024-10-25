@@ -123,13 +123,71 @@ public class StudentRepositoryImpl implements StudentRepository {
     @Override
     public long totalCount(Connection connection) {
         //todo#4 totalCount 구현
+        String sql = "select count(*) from jdbc_students";
+        ResultSet rs = null;
+
+        try(PreparedStatement ps = connection.prepareStatement(sql)){
+            rs = ps.executeQuery();
+            if(rs.next()){
+                return rs.getLong(1);
+            }
+        } catch(SQLException e){
+
+        } finally {
+            try {
+                rs.close();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         return 0l;
     }
 
     @Override
     public Page<Student> findAll(Connection connection, int page, int pageSize) {
         //todo#5 페이징 처리 구현
-        return null;
+        int offset = (page-1) * pageSize;
+
+        ResultSet rs = null;
+        String sql = "select * from jdbc_students order by id desc limit ?,? ";
+
+        try(PreparedStatement ps = connection.prepareStatement(sql)){
+            ps.setInt(1, offset);
+            ps.setInt(2, pageSize);
+            rs = ps.executeQuery();
+
+            List<Student> studentList = new ArrayList<>(pageSize);
+            while(rs.next()){
+                studentList.add(
+                        new Student(
+                                rs.getString("id"),
+                                rs.getString("name"),
+                                Student.GENDER.valueOf(rs.getString("gender")),
+                                rs.getInt("age"),
+                                rs.getTimestamp("created_at").toLocalDateTime()
+                        )
+                );
+            }
+
+            long total = 0;
+
+            if(!studentList.isEmpty()){
+                total = totalCount(connection);
+            }
+
+            return new Page<Student>(studentList, total);
+
+        } catch (SQLException e){
+            throw new RuntimeException(e);
+        } finally {
+            try {
+                rs.close();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
     }
 
 }
