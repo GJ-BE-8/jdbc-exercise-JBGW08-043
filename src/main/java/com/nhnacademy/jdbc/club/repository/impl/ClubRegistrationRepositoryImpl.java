@@ -119,7 +119,6 @@ public class ClubRegistrationRepositoryImpl implements ClubRegistrationRepositor
                         "left join jdbc_club_registrations b on a.id = b.student_id " +
                         "left join jdbc_club c on b.club_id = c.club_id " +
                         "order by a.id asc, b.club_id asc";
-        ;
 
         return findClubStudents(connection, sql);
 
